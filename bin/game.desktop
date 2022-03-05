@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Game
+Comment=The game
+MimeType=application/x-love-game;
+Exec=game %f
+Type=Application
+Categories=Game;
+Terminal=false
+Icon=love
+NoDisplay=true
