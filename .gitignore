@@ -1,0 +1,12 @@
+# Builds
+*.love
+*.tar.gz
+*.zip
+
+# Shared objects
+*.dll
+
+# Executables
+*.AppImage
+*.exe
+
