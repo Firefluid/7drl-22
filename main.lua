@@ -1,3 +1,5 @@
+local utf8 = require "utf8"
+
 local tileset = {
   meta = {
     file = "data/tileset.png",
@@ -25,9 +27,21 @@ local tileset = {
   king_black = {128 + 16 * 5, 0, 16, 32},
   king_outline = {32 + 16 * 5, 32, 16, 32}
 }
+local ascii_image
 
 local scale = 3
 local fullscreen = false
+
+function drawText(x, y, str)
+  for p,c in utf8.codes(str) do
+    local ascii = c - 32
+    love.graphics.draw(ascii_image,
+        love.graphics.newQuad((ascii % 32) * 9, (math.floor(ascii / 32)) * 16,
+          9, 16, 288, 48),
+        x, y)
+    x = x + 9
+  end
+end
 
 function drawTile(tile, x, y)
   love.graphics.draw(tileset.meta.image,
@@ -70,6 +84,8 @@ end
 function love.load()
   tileset.meta.image = love.graphics.newImage(tileset.meta.file)
   tileset.meta.image:setFilter("nearest", "nearest")
+  ascii_image = love.graphics.newImage("data/ascii.png")
+  ascii_image:setFilter("nearest", "nearest")
 end
 
 function love.draw()
@@ -120,6 +136,8 @@ function love.draw()
 
   drawPiece("queen", "black", 4 * 16, 7 * 16)
   drawPiece("king", "black", 5 * 16, 7 * 16)
+
+  drawText(1, 1, "123, Hello World!")
 
   love.graphics.origin()
 end
