@@ -1,54 +1,18 @@
-local utf8 = require "utf8"
+require "common"
 
-local tileset = {
-  meta = {
-    file = "data/tileset.png",
-    width = 512,
-    height = 512
-  },
-  floor1 = {0, 0, 16, 16},
-  floor2 = {16, 0, 16, 16},
-  pawn_white = {32, 0, 16, 32},
-  pawn_black = {128, 0, 16, 32},
-  pawn_outline = {32, 32, 16, 32},
-  rook_white = {32 + 16, 0, 16, 32},
-  rook_black = {128 + 16, 0, 16, 32},
-  rook_outline = {32 + 16, 32, 16, 32},
-  bishop_white = {32 + 16 * 2, 0, 16, 32},
-  bishop_black = {128 + 16 * 2, 0, 16, 32},
-  bishop_outline = {32 + 16 * 2, 32, 16, 32},
-  knight_white = {32 + 16 * 3, 0, 16, 32},
-  knight_black = {128 + 16 * 3, 0, 16, 32},
-  knight_outline = {32 + 16 * 3, 32, 16, 32},
-  queen_white = {32 + 16 * 4, 0, 16, 32},
-  queen_black = {128 + 16 * 4, 0, 16, 32},
-  queen_outline = {32 + 16 * 4, 32, 16, 32},
-  king_white = {32 + 16 * 5, 0, 16, 32},
-  king_black = {128 + 16 * 5, 0, 16, 32},
-  king_outline = {32 + 16 * 5, 32, 16, 32}
-}
-local ascii_image
-
-local scale = 3
-local fullscreen = false
-
-function drawText(x, y, str)
-  for p,c in utf8.codes(str) do
-    local ascii = c - 32
-    love.graphics.draw(ascii_image,
-        love.graphics.newQuad((ascii % 32) * 9, (math.floor(ascii / 32)) * 16,
-          9, 16, 288, 48),
-        x, y)
-    x = x + 9
+function drawBackground()
+  local w, h = getDimensions()
+  w = w / 16
+  h = h / 16
+  for y=0,h do
+    for x=0,w do
+      if (x + y) % 2 == 1 then
+        drawTile("floor1", x * 16, y * 16)
+      else
+        drawTile("floor2", x * 16, y * 16)
+      end
+    end
   end
-end
-
-function drawTile(tile, x, y)
-  love.graphics.draw(tileset.meta.image,
-      love.graphics.newQuad(tileset[tile][1], tileset[tile][2],
-          tileset[tile][3], tileset[tile][4],
-          tileset.meta.width, tileset.meta.height),
-      x , y)
 end
 
 function drawPiece(piece, team, x, y)
@@ -66,33 +30,9 @@ function drawPiece(piece, team, x, y)
   love.graphics.setColor(1, 1, 1)
 end
 
-function drawBackground()
-  local w, h = love.graphics.getDimensions()
-  w = w / scale / 16
-  h = h / scale / 16
-  for y=0,h do
-    for x=0,w do
-      if (x + y) % 2 == 1 then
-        drawTile("floor1", x * 16, y * 16)
-      else
-        drawTile("floor2", x * 16, y * 16)
-      end
-    end
-  end
-end
+MainScene = Object:extend()
 
-function love.load()
-  tileset.meta.image = love.graphics.newImage(tileset.meta.file)
-  tileset.meta.image:setFilter("nearest", "nearest")
-  ascii_image = love.graphics.newImage("data/ascii.png")
-  ascii_image:setFilter("nearest", "nearest")
-end
-
-function love.draw()
-  local transform = love.math.newTransform()
-  transform:scale(scale)
-  love.graphics.applyTransform(transform)
-
+function MainScene:draw()
   for y=1,8 do
     for x=1,8 do
       if (x + y) % 2 == 1 then
@@ -136,19 +76,50 @@ function love.draw()
 
   drawPiece("queen", "black", 4 * 16, 7 * 16)
   drawPiece("king", "black", 5 * 16, 7 * 16)
-
-  drawText(1, 1, "123, Hello World!")
-
-  love.graphics.origin()
 end
 
-function love.resize(w, h)
-  scale = math.max(math.min(math.floor(w / 240), math.floor(h / 136)), 1)
+MainScene:implement(Scene)
+
+SplashScene = Object:extend()
+
+function SplashScene:new()
+  self.time = 0
+  self.stage = 1
 end
 
-function love.keypressed(key, scancode, isrepeat)
-  if scancode == "f11" then
-    fullscreen = not fullscreen
-    love.window.setFullscreen(fullscreen)
+function SplashScene:update(dt)
+  self.time = self.time + dt
+
+  if self.stage == 1 then
+    if self.time > 0.5 then
+      self.time = self.time - 0.5
+      self.stage = 2
+    end
+  elseif self.stage == 2 then
+    if self.time > 1.5 then
+      self.time = self.time - 1.5
+      self.stage = 3
+    end
+  elseif self.stage == 3 then
+    if self.time > 0.5 then
+      -- Go to next stage
+      current_scene = MainScene()
+    end
   end
 end
+
+function SplashScene:draw()
+  local w, h = getDimensions()
+  local tw = textWidth("firefluid")
+
+  love.graphics.clear()
+
+  if self.stage == 2 then
+    drawTile("logo", w / 2 - 16, h / 2 - 16)
+    drawText((w - tw) / 2, h / 2 + 24, "firefluid")
+  end
+end
+
+SplashScene:implement(Scene)
+
+current_scene = SplashScene()

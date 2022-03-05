@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=Game
-Comment=The game
+Name=Chess of the Quene
+Comment=A game about saving your quene. Made during the 7DRL Challenge 2022.
 MimeType=application/x-love-game;
-Exec=game %f
+Exec=dameschess %f
 Type=Application
 Categories=Game;
 Terminal=false

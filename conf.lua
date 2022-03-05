@@ -3,7 +3,7 @@ function love.conf(t)
   t.modules.physics = false
   t.version = "11.4"
 
-  t.window.title = "Game"
+  t.window.title = "Dame's Chess"
   t.window.icon = nil
   t.window.resizable = true
   t.window.width = 960
