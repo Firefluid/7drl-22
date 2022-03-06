@@ -12,6 +12,8 @@ local tileset = {
   logo = {0, 32, 32, 32},
   floor1 = {0, 0, 16, 16},
   floor2 = {16, 0, 16, 16},
+  wall1 = {224, 0, 16, 32},
+  wall2 = {224 + 16, 0, 16, 32},
   pawn_white = {32, 0, 16, 32},
   pawn_black = {128, 0, 16, 32},
   pawn_outline = {32, 32, 16, 32},
@@ -80,8 +82,54 @@ function drawTile(tile, x, y)
       love.graphics.newQuad(tileset[tile][1], tileset[tile][2],
           tileset[tile][3], tileset[tile][4],
           tileset.meta.width, tileset.meta.height),
-      x , y)
+      math.floor(x) , math.floor(y))
 end
+
+local old_setColor = love.graphics.setColor
+local oldr, oldg, oldb, olda = 1, 1, 1, 1
+function love.graphics.setColor(r, g, b, a)
+  a = a or 1
+  oldr, oldg, oldb, olda = love.graphics.getColor()
+  old_setColor(r, g, b, a)
+end
+
+function love.graphics.resetColor()
+  old_setColor(oldr, oldg, oldb, olda)
+end
+
+function spiral(x, y, i)
+  local ix, iy = 0, 0
+  local dx, dy = 0, -1
+  for j=1,i do
+    if ix == iy or (ix < 0 and ix == -iy) or (ix > 0 and ix == 1-iy) then
+      dx, dy = -dy, dx
+    end
+    ix = ix + dx
+    iy = iy + dy
+  end
+
+  return ix + x, iy + y
+end
+
+function ispiralgen(x, y, i)
+  local ix, iy = 0, 0
+  local dx, dy = 0, -1
+  for j=1,i do
+    coroutine.yield(ix + x, iy + y)
+    if ix == iy or (ix < 0 and ix == -iy) or (ix > 0 and ix == 1-iy) then
+      dx, dy = -dy, dx
+    end
+    ix = ix + dx
+    iy = iy + dy
+  end
+end
+
+function ispiral(x, y, i)
+  return coroutine.wrap(function () ispiralgen(x, y, i) end)
+end
+
+
+-- LÖVE Callbacks
 
 function love.load()
   tileset.meta.image = love.graphics.newImage(tileset.meta.file)
