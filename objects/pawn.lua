@@ -33,12 +33,12 @@ function Pawn:step()
   if self.target and (not self.target.alive
       or math.abs(self.x - self.target.x) > 8
       or math.abs(self.y - self.target.y) > 8) then
-    self.target = null
+    self.target = nil
   end
 
   -- Look for potential targets
   if not self.target then
-    for x,y in ispiral(self.x, self.y, 225) do
+    for x,y in spiral(self.x, self.y, 225) do
       local piece = self.world:getPiece(x, y)
       if piece and piece.team ~= self.team then
         self.target = piece

@@ -97,21 +97,7 @@ function love.graphics.resetColor()
   old_setColor(oldr, oldg, oldb, olda)
 end
 
-function spiral(x, y, i)
-  local ix, iy = 0, 0
-  local dx, dy = 0, -1
-  for j=1,i do
-    if ix == iy or (ix < 0 and ix == -iy) or (ix > 0 and ix == 1-iy) then
-      dx, dy = -dy, dx
-    end
-    ix = ix + dx
-    iy = iy + dy
-  end
-
-  return ix + x, iy + y
-end
-
-function ispiralgen(x, y, i)
+function spiralgen(x, y, i)
   local ix, iy = 0, 0
   local dx, dy = 0, -1
   for j=1,i do
@@ -124,8 +110,12 @@ function ispiralgen(x, y, i)
   end
 end
 
-function ispiral(x, y, i)
-  return coroutine.wrap(function () ispiralgen(x, y, i) end)
+function spiral(x, y, i)
+  return coroutine.wrap(function () spiralgen(x, y, i) end)
+end
+
+function lerp(x1, x2, t)
+  return x1 + t * (x2 - x1)
 end
 
 

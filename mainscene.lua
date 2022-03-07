@@ -5,10 +5,6 @@ require "objects.world"
 
 camx, camy = 0, 0
 
-function lerp(x1, x2, t)
-  return x1 + t * (x2 - x1)
-end
-
 function drawBackground()
   local w, h = getDimensions()
   for y = -2, h / 16 do
@@ -49,15 +45,16 @@ MainScene = Scene:extend()
 
 function MainScene:new()
   -- Generate world
-  self.player = Player(0, 0)
+  self.player = Player(6, 2)
   self.world = World()
   for i=1,8 do
-    self.world:addPiece(Pawn(i, 6, "black"))
+    self.world:addPiece(Pawn(i + 1, 6 + 2, "black"))
   end
   for i=1,8 do
-    self.world:addPiece(Pawn(i, 1, "white"))
+    self.world:addPiece(Pawn(i + 1, 1 + 2, "white"))
   end
   self.world:addPiece(self.player)
+  self.world:sortPieces()
 
   self.t = 0
   self.deathtime = 0
@@ -126,8 +123,6 @@ function MainScene:draw()
 
   drawBackground()
 
-  self.world:draw()
-
   local white_t = 1
   local black_t = 1
   if self.state == 4 then
@@ -136,14 +131,9 @@ function MainScene:draw()
     white_t = self.t / self.animduration
   end
 
-  for i,v in ipairs(self.world:getPieces()) do
-    if v.team == "white" then
-      v:draw(white_t)
-    else
-      v:draw(black_t)
-    end
-  end
+  self.world:draw(white_t, black_t)
 
+  -- Death screen
   if self.state == 1 and not self.player.alive then
     local w, h = getDimensions()
     local tw = textWidth("YOU DIED")
