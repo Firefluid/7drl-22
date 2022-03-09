@@ -46,14 +46,13 @@ MainScene = Scene:extend()
 function MainScene:new()
   -- Generate world
   self.player = Player(6, 2)
-  self.world = World()
+  self.world = World(self.player)
   for i=1,8 do
     self.world:addPiece(Pawn(i + 1, 6 + 2, "black"))
   end
   for i=1,8 do
     self.world:addPiece(Pawn(i + 1, 1 + 2, "white"))
   end
-  self.world:addPiece(self.player)
   self.world:sortPieces()
 
   self.t = 0

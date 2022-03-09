@@ -7,6 +7,15 @@ function Player:new(x, y)
   self.type = "king"
 end
 
+function Player:move(x, y)
+  if self.world:isEmpty(x, y) then
+    self.x = x
+    self.y = y
+  else
+    self.world:interact(x, y)
+  end
+end
+
 function Player:step()
   self.super.step(self)
 
