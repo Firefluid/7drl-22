@@ -12,27 +12,27 @@ local function generate_rooms(x, y, w, h, margin)
   stack[1] = {x, y, w, h}
   while #stack > 0 do
     local sx, sy, sw, sh = unpack(table.remove(stack, 1))
-    local w = math.random(6, math.min(sw, 18))
-    local h = math.random(6, math.min(sh, 18))
-    local x, y = math.random(sx, sx + sw - w), math.random(sy, sy + sh - h)
+    local rw = math.random(6, math.min(sw, 18))
+    local rh = math.random(6, math.min(sh, 18))
+    local rx, ry = math.random(sx, sx + sw - rw), math.random(sy, sy + sh - rh)
 
     if sw >= 6 and sh >= 6 then
-      table.insert(rooms, {x, y, w, h})
+      table.insert(rooms, {rx, ry, rw, rh})
 
       if sw >= sh then
-        table.insert(stack, {sx + m, sy + m, x - sx - 2 * m, sh - 2 * m})
+        table.insert(stack, {sx + m, sy + m, rx - sx - 2 * m, sh - 2 * m})
         table.insert(stack,
-            {x + w + m, sy + m, sw - (x - sx) - w - 2 * m, sh - 2 * m})
-        table.insert(stack, {x + m, sy + m, w - 2 * m, y - sy - 2 * m})
+            {rx + rw + m, sy + m, sw - (rx - sx) - rw - 2 * m, sh - 2 * m})
+        table.insert(stack, {x + m, sy + m, rw - 2 * m, ry - sy - 2 * m})
         table.insert(stack,
-            {x + m, y + h + m, w - 2 * m, sh - (y - sy) - h - 2 * m})
+            {rx + m, ry + rh + m, rw - 2 * m, sh - (ry - sy) - rh - 2 * m})
       else
-        table.insert(stack, {sx + m, sy + m, sw - 2 * m, y - sy - 2 * m})
+        table.insert(stack, {sx + m, sy + m, sw - 2 * m, ry - sy - 2 * m})
         table.insert(stack,
-            {sx + m, y + h + m, sw - 2 * m, sh - (y - sy) - h - 2 * m})
-        table.insert(stack, {sx + m, y + m, x - sx - 2 * m, h - 2 * m})
+            {sx + m, ry + rh + m, sw - 2 * m, sh - (ry - sy) - rh - 2 * m})
+        table.insert(stack, {sx + m, ry + m, rx - sx - 2 * m, rh - 2 * m})
         table.insert(stack,
-            {x + w + m, y + m, sw - (x - sx) - w - 2 * m, h - 2 * m})
+            {rx + rw + m, ry + m, sw - (rx - sx) - rw - 2 * m, rh - 2 * m})
       end
     end
   end
@@ -44,14 +44,14 @@ local function outline_rooms(world, rooms)
   for i,r in ipairs(rooms) do
     local x, y, w, h = unpack(r)
 
-    for i = x, x + w - 1 do
-      world[y][i] = "wall1"
-      world[y + h - 1][i] = "wall1"
+    for ix = x, x + w - 1 do
+      world[y][ix] = "wall1"
+      world[y + h - 1][ix] = "wall1"
     end
 
-    for i = y + 1, y + h - 2 do
-      world[i][x] = "wall1"
-      world[i][x + w - 1] = "wall1"
+    for iy = y + 1, y + h - 2 do
+      world[iy][x] = "wall1"
+      world[iy][x + w - 1] = "wall1"
     end
   end
 end
@@ -111,16 +111,21 @@ local function carve_linepath(world, rooms, x1, y1, x2, y2)
   end
 end
 
+local function randomteam(ratio)
+  if math.random() < ratio then
+    return "black"
+  else
+    return "white"
+  end
+end
+
 local function place_pieces(rooms, ratio)
   local pieces = {}
 
   for i,r in ipairs(rooms) do
     if i > 1 then
       local rx, ry, rw, rh = unpack(r)
-      local team = "white"
-      if math.random() < ratio then
-        team = "black"
-      end
+      local team = randomteam(ratio)
 
       if rw >= 9 and rh >= 9 and math.random(3) ==  1 then
         table.insert(pieces, Pawn(rx + 5, ry + 3, team))
@@ -130,12 +135,14 @@ local function place_pieces(rooms, ratio)
       elseif math.random(3) == 1 then -- A group of pawns
         local count = math.random(math.min(rw, rh, 8))
         if rw < rh then
-          for i=1,count do
-            table.insert(pieces, Pawn(rx + math.random(rw - 2), ry + i, team))
+          for iy=1,count do
+            table.insert(pieces,
+                Pawn(rx + math.random(rw - 2), ry + iy, randomteam(ratio)))
           end
         else
-          for i=1,count do
-            table.insert(pieces, Pawn(rx + i, ry + math.random(rh - 2), team))
+          for ix=1,count do
+            table.insert(pieces,
+                Pawn(rx + ix, ry + math.random(rh - 2), randomteam(ratio)))
           end
         end
       else -- Single piece
@@ -160,7 +167,7 @@ end
 
 local function generate(width, height)
   local world = {}
-  local pieces = {}
+  local pieces
 
   for y=1,height do
     world[y] = {}
@@ -214,7 +221,7 @@ local function generate(width, height)
   -- Connect rooms with doors and halls
   for i,r1 in ipairs(rooms) do
     local x1, y1, w1, h1 = unpack(r1)
-    for i,r2 in ipairs(rooms) do
+    for j,r2 in ipairs(rooms) do
       if r1 ~= r2 and not r2.hasdoor then
         local x2, y2, w2, h2 = unpack(r2)
         local h = false
@@ -317,6 +324,8 @@ function World:new(player)
   end
 
   self:addPiece(self.player)
+
+  self:sortPieces()
 end
 
 function World:addPiece(piece)
@@ -375,14 +384,15 @@ end
 
 function World:draw(white_t, black_t)
   local w, h = getDimensions()
-  local ox = - camx + w / 2
-  local oy = - camy + h / 2
+
+  love.graphics.push("transform")
+  love.graphics.translate(math.floor(-camx + w / 2), math.floor(-camy + h / 2))
 
   for y=1,self.height do
     for x=1,self.width do
       local tile = self.static[y][x]
       if tile then
-        drawTile(tile, ox + x * 16, oy + y * 16 - 16)
+        drawTile(tile, x * 16, y * 16 - 16)
       end
     end
 
@@ -397,6 +407,9 @@ function World:draw(white_t, black_t)
     end
   end
 
+  love.graphics.pop()
+
+  -- Minimap
   for y=1,self.height do
     for x=1,self.width do
       if self.static[y][x] then

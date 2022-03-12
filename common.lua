@@ -120,6 +120,10 @@ function lerp(x1, x2, t)
   return x1 + t * (x2 - x1)
 end
 
+function map(a, min1, max1, min2, max2)
+  return (a - min1) / (max1 - min1) * (max2 - min2) + min2
+end
+
 
 -- LÖVE Callbacks
 

@@ -1,3 +1,5 @@
+require "classic"
+
 Piece = Object:extend()
 
 function Piece:new(x, y, team)
@@ -30,8 +32,6 @@ function Piece:raycast(x, y)
   local err = dx + dy
   local e2
 
-  local n = 1
-
   while true do
     e2 = 2 * err
     if e2 >= dy then
@@ -62,6 +62,9 @@ function Piece:move(x, y)
   if self.world:isEmpty(x, y) then
     self.x = x
     self.y = y
+    return true
+  else
+    return false
   end
 end
 
@@ -108,9 +111,29 @@ function Piece:step()
   end
 end
 
+function Piece:drawPiece(piece, team, x, y, outline)
+  y = y - 16
+  
+  drawTile(piece .. "_" .. team, x, y)
+
+  -- Draw outline
+  if team == "white" then
+    love.graphics.setColor(0, 0, 0, 0.75)
+  elseif outline then
+    love.graphics.setColor(1, 0, 0,
+        map(math.sin(love.timer.getTime() * 4 * math.pi), -1, 1, 0.5, 1))
+  else
+    love.graphics.setColor(1, 1, 1, 0.75)
+  end
+
+  drawTile(piece .. "_outline", x, y - 1)
+
+  love.graphics.resetColor()
+end
+
 function Piece:draw(t)
   local x = lerp(self.px * 16, self.x * 16, t)
   local y = lerp(self.py * 16, self.y * 16, t)
 
-  drawPiece(self.type, self.team, x, y, self.target ~= nil)
+  self:drawPiece(self.type, self.team, x, y, self.target ~= nil)
 end

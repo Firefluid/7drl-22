@@ -20,40 +20,13 @@ function drawBackground()
   end
 end
 
-function drawPiece(piece, team, x, y, outline)
-  local w, h = getDimensions()
-  x = x - camx + w / 2
-  y = y - 16 - camy + h / 2
-  drawTile(piece .. "_" .. team, x, y)
-
-  -- Draw outline
-  if team == "white" then
-    love.graphics.setColor(0, 0, 0, 0.75)
-  elseif outline then
-    love.graphics.setColor(1, 0, 0, 0.75)
-  else
-    love.graphics.setColor(1, 1, 1, 0.75)
-  end
-
-  drawTile(piece .. "_outline", x, y - 1)
-
-  love.graphics.resetColor()
-end
-
 
 MainScene = Scene:extend()
 
 function MainScene:new()
   -- Generate world
-  self.player = Player(6, 2)
+  self.player = Player(0, 0)
   self.world = World(self.player)
-  for i=1,8 do
-    self.world:addPiece(Pawn(i + 1, 6 + 2, "black"))
-  end
-  for i=1,8 do
-    self.world:addPiece(Pawn(i + 1, 1 + 2, "white"))
-  end
-  self.world:sortPieces()
 
   self.t = 0
   self.deathtime = 0

@@ -41,10 +41,12 @@ function Rook:step()
   for i,d in ipairs(directions) do
     for l=1,maxlen do
       local x, y = self.x + d[1] * l, self.y + d[2] * l
-      local enemy = self.world:getPiece(x, y)
-      if enemy and enemy.team ~= self.team then
-        self:kill(x, y)
-        return
+      if not self:raycast(x, y) then
+        local enemy = self.world:getPiece(x, y)
+        if enemy and enemy.team ~= self.team then
+          self:kill(x, y)
+          return
+        end
       end
     end
   end

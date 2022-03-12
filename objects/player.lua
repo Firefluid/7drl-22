@@ -5,15 +5,23 @@ Player = Piece:extend()
 function Player:new(x, y)
   self.super.new(self, x, y, "white")
   self.type = "king"
+  self.wx = x
+  self.wy = y
+end
+
+function Player:kill(x, y)
+  self.wx = x
+  self.wy = y
+  self.super.kill(self, x, y)
 end
 
 function Player:move(x, y)
-  if self.world:isEmpty(x, y) then
-    self.x = x
-    self.y = y
-  else
+  self.wx = x
+  self.wy = y
+  if not self.super.move(self, x, y) then
     self.world:interact(x, y)
   end
+  return true
 end
 
 function Player:step()
@@ -48,4 +56,20 @@ function Player:step()
   end
 
   return makemove
+end
+
+function Player:draw(t)
+  local x, y
+  if self.wx ~= self.x or self.wy ~= self.y then
+    -- Could not move to desired tile, animate bump
+    local dx = self.wx - self.x
+    local dy = self.wy - self.y
+    x = lerp(self.x * 16, (self.x + dx * 3 / 16) * 16, math.sin(t * math.pi))
+    y = lerp(self.y * 16, (self.y + dy * 3 / 16) * 16, math.sin(t * math.pi))
+  else
+    x = lerp(self.px * 16, self.x * 16, t)
+    y = lerp(self.py * 16, self.y * 16, t)
+  end
+
+  self:drawPiece(self.type, self.team, x, y, self.target ~= nil)
 end
