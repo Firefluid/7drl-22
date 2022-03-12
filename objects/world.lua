@@ -1,4 +1,60 @@
+require "classic"
+require "objects.pawn"
+require "objects.rook"
+
 World = Object:extend()
+
+local function generate_rooms(x, y, w, h, margin)
+  local m = margin or 2
+  local stack = {}
+  local rooms = {}
+
+  stack[1] = {x, y, w, h}
+  while #stack > 0 do
+    local sx, sy, sw, sh = unpack(table.remove(stack, 1))
+    local w = math.random(6, math.min(sw, 18))
+    local h = math.random(6, math.min(sh, 18))
+    local x, y = math.random(sx, sx + sw - w), math.random(sy, sy + sh - h)
+
+    if sw >= 6 and sh >= 6 then
+      table.insert(rooms, {x, y, w, h})
+
+      if sw >= sh then
+        table.insert(stack, {sx + m, sy + m, x - sx - 2 * m, sh - 2 * m})
+        table.insert(stack,
+            {x + w + m, sy + m, sw - (x - sx) - w - 2 * m, sh - 2 * m})
+        table.insert(stack, {x + m, sy + m, w - 2 * m, y - sy - 2 * m})
+        table.insert(stack,
+            {x + m, y + h + m, w - 2 * m, sh - (y - sy) - h - 2 * m})
+      else
+        table.insert(stack, {sx + m, sy + m, sw - 2 * m, y - sy - 2 * m})
+        table.insert(stack,
+            {sx + m, y + h + m, sw - 2 * m, sh - (y - sy) - h - 2 * m})
+        table.insert(stack, {sx + m, y + m, x - sx - 2 * m, h - 2 * m})
+        table.insert(stack,
+            {x + w + m, y + m, sw - (x - sx) - w - 2 * m, h - 2 * m})
+      end
+    end
+  end
+
+  return rooms
+end
+
+local function outline_rooms(world, rooms)
+  for i,r in ipairs(rooms) do
+    local x, y, w, h = unpack(r)
+
+    for i = x, x + w - 1 do
+      world[y][i] = "wall1"
+      world[y + h - 1][i] = "wall1"
+    end
+
+    for i = y + 1, y + h - 2 do
+      world[i][x] = "wall1"
+      world[i][x + w - 1] = "wall1"
+    end
+  end
+end
 
 local function inside(x, y, rx, ry, rw, rh)
   if type(rx) == "table" then
@@ -55,6 +111,53 @@ local function carve_linepath(world, rooms, x1, y1, x2, y2)
   end
 end
 
+local function place_pieces(rooms, ratio)
+  local pieces = {}
+
+  for i,r in ipairs(rooms) do
+    if i > 1 then
+      local rx, ry, rw, rh = unpack(r)
+      local team = "white"
+      if math.random() < ratio then
+        team = "black"
+      end
+
+      if rw >= 9 and rh >= 9 and math.random(3) ==  1 then
+        table.insert(pieces, Pawn(rx + 5, ry + 3, team))
+        table.insert(pieces, Pawn(rx + 3, ry + 5, team))
+        table.insert(pieces, Pawn(rx + 7, ry + 5, team))
+        table.insert(pieces, Pawn(rx + 5, ry + 7, team))
+      elseif math.random(3) == 1 then -- A group of pawns
+        local count = math.random(math.min(rw, rh, 8))
+        if rw < rh then
+          for i=1,count do
+            table.insert(pieces, Pawn(rx + math.random(rw - 2), ry + i, team))
+          end
+        else
+          for i=1,count do
+            table.insert(pieces, Pawn(rx + i, ry + math.random(rh - 2), team))
+          end
+        end
+      else -- Single piece
+        local x = math.random(rx + 1, rx + rw - 3)
+        local y = math.random(ry + 1, ry + rh - 3)
+
+        local type = math.random(2)
+        local piece
+        if type == 1 then
+          piece = Pawn(x, y, team)
+        else
+          piece = Rook(x, y, team)
+        end
+
+        table.insert(pieces, piece)
+      end
+    end
+  end
+
+  return pieces
+end
+
 local function generate(width, height)
   local world = {}
   local pieces = {}
@@ -92,65 +195,10 @@ local function generate(width, height)
   --   - King, white queen, guards and lots of enemies
   --   - Few large rooms
 
-  --[[for i=1,10 do
-    local w = math.random(6, 16)
-    local h = math.random(6, 16)
-    local x = math.random(width - w)
-    local y = math.random(height - h)
-
-    for i = x, x + w - 1 do
-      world[y][i] = "wall1"
-      world[y + h - 1][i] = "wall1"
-    end
-
-    for i = y + 1, y + h - 2 do
-      world[i][x] = "wall1"
-      world[i][x + w - 1] = "wall1"
-    end
-  end]]
-
   -- Generate room spaces
-  local stack = {}
-  local rooms = {}
-  local margin = 2
-  stack[#stack + 1] = {2, 2, width - 2, height - 2}
-  while #stack > 0 do
-    local sx, sy, sw, sh = unpack(table.remove(stack, 1))
-    local w = math.random(6, math.min(sw, 18))
-    local h = math.random(6, math.min(sh, 18))
-    local x, y = math.random(sx, sx + sw - w), math.random(sy, sy + sh - h)
+  local rooms = generate_rooms(2, 2, width - 2, height - 2)
 
-    if sw >= 6 and sh >= 6 then
-      for i = x, x + w - 1 do
-        world[y][i] = "wall1"
-        world[y + h - 1][i] = "wall1"
-      end
-
-      for i = y + 1, y + h - 2 do
-        world[i][x] = "wall1"
-        world[i][x + w - 1] = "wall1"
-      end
-
-      table.insert(rooms, {x, y, w, h})
-
-      local m = margin
-      if sw >= sh then
-        table.insert(stack, {sx + m, sy + m, x - sx - 2 * m, sh - 2 * m})
-        table.insert(stack,
-            {x + w + m, sy + m, sw - (x - sx) - w - 2 * m, sh - 2 * m})
-        table.insert(stack, {x + m, sy + m, w - 2 * m, y - sy - 2 * m})
-        table.insert(stack,
-            {x + m, y + h + m, w - 2 * m, sh - (y - sy) - h - 2 * m})
-      else
-        table.insert(stack, {sx + m, sy + m, sw - 2 * m, y - sy - 2 * m})
-        table.insert(stack,
-            {sx + m, y + h + m, sw - 2 * m, sh - (y - sy) - h - 2 * m})
-        table.insert(stack, {sx + m, y + m, x - sx - 2 * m, h - 2 * m})
-        table.insert(stack,
-            {x + w + m, y + m, sw - (x - sx) - w - 2 * m, h - 2 * m})
-      end
-    end
-  end
+  outline_rooms(world, rooms)
 
   -- Fill underground with stone
   for y=1,height do
@@ -242,19 +290,7 @@ local function generate(width, height)
   end
 
   -- Place enemies into the rooms
-  for i,r in ipairs(rooms) do
-    if i ~= 1 then
-      local rx, ry, rw, rh = unpack(r)
-      local team = "white"
-      if math.random(2) == 2 then
-        team = "black"
-      end
-      local x = math.random(rx + 1, rx + rw - 3)
-      local y = math.random(ry + 1, ry + rh - 3)
-
-      table.insert(pieces, Pawn(x, y, team))
-    end
-  end
+  pieces = place_pieces(rooms, 0.6)
 
   -- Position player into the first room
   local rx, ry, rw, rh = unpack(rooms[1])
@@ -309,6 +345,9 @@ function World:getPiece(x, y)
 end
 
 function World:isEmpty(x, y)
+  if x < 1 or y < 1 or x > self.width or y > self.height then
+    return false
+  end
   return self:getPiece(x, y) == nil and self.static[y][x] == nil
 end
 

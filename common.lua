@@ -36,7 +36,7 @@ local tileset = {
   king_outline = {32 + 16 * 5, 32, 16, 32}
 }
 local ascii_image
-local scale = 3
+local scale = 2
 local fullscreen = false
 
 Scene = Object:extend()
@@ -145,7 +145,7 @@ function love.draw()
 end
 
 function love.resize(w, h)
-  scale = math.max(math.min(math.floor(w / 240), math.floor(h / 136)), 1)
+  scale = math.max(math.min(math.floor(w / 240), math.floor(h / 240)), 1)
 end
 
 function love.keypressed(key, scancode, isrepeat)

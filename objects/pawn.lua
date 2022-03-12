@@ -14,38 +14,24 @@ function Pawn:moverandom()
     {self.x, self.y + 1},
     {self.x, self.y - 1}
   }
-  for i,v in ipairs(positions) do
-    if not self.world:isEmpty(v[1], v[2]) then
+
+  local i = 1
+  while i < #positions do
+    if not self:legal(unpack(positions[i])) then
       table.remove(positions, i)
+    else
+      i = i + 1
     end
   end
 
   local randompos = positions[math.random(#positions)]
   if randompos then
-    self:move(randompos[1], randompos[2])
+    self:move(unpack(randompos))
   end
 end
 
 function Pawn:step()
   self.super.step(self)
-
-  -- Lose target
-  if self.target and (not self.target.alive
-      or math.abs(self.x - self.target.x) > 8
-      or math.abs(self.y - self.target.y) > 8) then
-    self.target = nil
-  end
-
-  -- Look for potential targets
-  if not self.target then
-    for x,y in spiral(self.x, self.y, 225) do
-      local piece = self.world:getPiece(x, y)
-      if piece and piece.team ~= self.team and not self:raycast(x, y) then
-        self.target = piece
-        break
-      end
-    end
-  end
 
   -- Kill any enemy that can be killed right now
   local offsets = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
@@ -59,27 +45,21 @@ function Pawn:step()
   end
 
   if self.target then
-    -- Try to kill target
+    -- Try to get close
     local dx = self.target.x - self.x
     local dy = self.target.y - self.y
 
-    if math.abs(dx) == 1 and math.abs(dy) == 1 then
-      -- Go for the kill
-      self:kill(self.target.x, self.target.y)
-    else
-      -- Try to get close
-      if math.abs(dx) >= math.abs(dy) then
-        if dx > 0 then
-          self:move(self.x + 1, self.y)
-        else
-          self:move(self.x - 1, self.y)
-        end
+    if math.abs(dx) >= math.abs(dy) then
+      if dx > 0 then
+        self:move(self.x + 1, self.y)
       else
-        if dy > 0 then
-          self:move(self.x, self.y + 1)
-        else
-          self:move(self.x, self.y - 1)
-        end
+        self:move(self.x - 1, self.y)
+      end
+    else
+      if dy > 0 then
+        self:move(self.x, self.y + 1)
+      else
+        self:move(self.x, self.y - 1)
       end
     end
   else

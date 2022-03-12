@@ -14,6 +14,10 @@ function Piece:setWorld(world)
   self.world = world
 end
 
+function Piece:legal(x, y)
+  return self.world:isEmpty(x, y) and not self:raycast(x, y)
+end
+
 -- Modified Bresenham's line algorithm
 -- (does not check first and last point
 -- since those are the pieces themselves)
@@ -62,6 +66,10 @@ function Piece:move(x, y)
 end
 
 function Piece:kill(x, y)
+  if self:raycast(x, y) then
+    return
+  end
+
   local piece = self.world:getPiece(x, y)
   if piece then
     piece:die()
@@ -74,6 +82,30 @@ end
 function Piece:step()
   self.px = self.x
   self.py = self.y
+
+  -- Lose/forget target
+  if self.target then
+    if not self.target.alive then
+      self.target = nil
+    elseif math.abs(self.x - self.target.x) >= 8
+        or math.abs(self.y - self.target.y) >= 8 then
+      self.target = nil
+    elseif math.random(5) == 1
+        and self:raycast(self.target.x, self.target.y) then
+      self.target = nil
+    end
+  end
+
+  -- Look for potential targets
+  if not self.target then
+    for x,y in spiral(self.x, self.y, 225) do -- Spiral a 8x8 field
+      local piece = self.world:getPiece(x, y)
+      if piece and piece.team ~= self.team and not self:raycast(x, y) then
+        self.target = piece
+        break
+      end
+    end
+  end
 end
 
 function Piece:draw(t)
