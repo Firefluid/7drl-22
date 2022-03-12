@@ -14,6 +14,41 @@ function Piece:setWorld(world)
   self.world = world
 end
 
+-- Modified Bresenham's line algorithm
+-- (does not check first and last point
+-- since those are the pieces themselves)
+function Piece:raycast(x, y)
+  local ix, iy = self.x, self.y
+  local dx, dy = math.abs(x - self.x), -math.abs(y - self.y)
+  local sx, sy
+  if self.x < x then sx = 1 else sx = -1 end
+  if self.y < y then sy = 1 else sy = -1 end
+  local err = dx + dy
+  local e2
+
+  local n = 1
+
+  while true do
+    e2 = 2 * err
+    if e2 >= dy then
+      err = err + dy
+      ix = ix + sx
+    end
+    if e2 <= dx then
+      err = err + dx
+      iy = iy + sy
+    end
+
+    if ix == x and iy == y then
+      return false
+    end
+
+    if not self.world:isEmpty(ix, iy) then
+      return true
+    end
+  end
+end
+
 function Piece:die()
   self.alive = false
   self.world:removePiece(self)

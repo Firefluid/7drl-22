@@ -116,7 +116,8 @@ local function generate(width, height)
   stack[#stack + 1] = {2, 2, width - 2, height - 2}
   while #stack > 0 do
     local sx, sy, sw, sh = unpack(table.remove(stack, 1))
-    local w, h = math.random(6, math.min(sw, 18)), math.random(6, math.min(sh, 18))
+    local w = math.random(6, math.min(sw, 18))
+    local h = math.random(6, math.min(sh, 18))
     local x, y = math.random(sx, sx + sw - w), math.random(sy, sy + sh - h)
 
     if sw >= 6 and sh >= 6 then
@@ -162,24 +163,7 @@ local function generate(width, height)
     end
   end
 
-  -- Connect rooms with doors (if they are close enough)
-  --[[for i,r in ipairs(rooms) do
-    local x, y, w, h = unpack(r)
-
-    -- Upper edge
-    for i = x, x + w - 1 do
-      local other = inside(i, y - 1, rooms)
-      if other then
-        local rx, ry, rw, rh = unpack(other)
-        if i ~= rx and i ~= rx + rw - 1 then
-          if math.random(8) == 1 then
-            world[y][i] = "door_h"
-            world[y - 1][i] = nil
-          end
-        end
-      end
-    end
-  end]]
+  -- Connect rooms with doors and halls
   for i,r1 in ipairs(rooms) do
     local x1, y1, w1, h1 = unpack(r1)
     for i,r2 in ipairs(rooms) do
@@ -220,7 +204,7 @@ local function generate(width, height)
           carve_linepath(world, rooms, cx, dy2, dx2, dy2)
         elseif v then
           local dx1, dy1, dx2, dy2
-          local cx
+          local cy
           dx1 = math.random(x1 + 1, x1 + w1 - 3)
           dx2 = math.random(x2 + 1, x2 + w2 - 3)
           if y1 < y2 then

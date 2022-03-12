@@ -40,7 +40,7 @@ function Pawn:step()
   if not self.target then
     for x,y in spiral(self.x, self.y, 225) do
       local piece = self.world:getPiece(x, y)
-      if piece and piece.team ~= self.team then
+      if piece and piece.team ~= self.team and not self:raycast(x, y) then
         self.target = piece
         break
       end
