@@ -12,6 +12,8 @@ local tileset = {
   logo = {0, 32, 32, 32},
   floor1 = {0, 0, 16, 16},
   floor2 = {16, 0, 16, 16},
+  stairs_down = {336, 0, 16, 32},
+  stairs_up = {336 + 16, 0, 16, 32},
   wall1 = {224, 0, 16, 32},
   wall2 = {224 + 16, 0, 16, 32},
   door_h = {304, 0, 16, 32},
@@ -132,6 +134,7 @@ function love.load()
   tileset.meta.image:setFilter("nearest", "nearest")
   ascii_image = love.graphics.newImage("data/ascii.png")
   ascii_image:setFilter("nearest", "nearest")
+  math.randomseed(os.time())
 end
 
 function love.update(dt)

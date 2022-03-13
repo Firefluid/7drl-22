@@ -19,7 +19,7 @@ function Rook:moverandom()
   end
 
   local i = 1
-  while i < #positions do
+  while i <= #positions do
     if not self:legal(unpack(positions[i])) then
       table.remove(positions, i)
     else

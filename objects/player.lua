@@ -71,5 +71,5 @@ function Player:draw(t)
     y = lerp(self.py * 16, self.y * 16, t)
   end
 
-  self:drawPiece(self.type, self.team, x, y, self.target ~= nil)
+  self:_drawPiece(self.type, self.team, x, y, self.target ~= nil)
 end

@@ -111,9 +111,9 @@ function Piece:step()
   end
 end
 
-function Piece:drawPiece(piece, team, x, y, outline)
+function Piece:_drawPiece(piece, team, x, y, outline)
   y = y - 16
-  
+
   drawTile(piece .. "_" .. team, x, y)
 
   -- Draw outline
@@ -135,5 +135,5 @@ function Piece:draw(t)
   local x = lerp(self.px * 16, self.x * 16, t)
   local y = lerp(self.py * 16, self.y * 16, t)
 
-  self:drawPiece(self.type, self.team, x, y, self.target ~= nil)
+  self:_drawPiece(self.type, self.team, x, y, self.target ~= nil)
 end

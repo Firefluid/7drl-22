@@ -123,7 +123,7 @@ local function place_pieces(rooms, ratio)
   local pieces = {}
 
   for i,r in ipairs(rooms) do
-    if i > 1 then
+    if i > 1 and i < #rooms then
       local rx, ry, rw, rh = unpack(r)
       local team = randomteam(ratio)
 
@@ -299,10 +299,18 @@ local function generate(width, height)
   -- Place enemies into the rooms
   pieces = place_pieces(rooms, 0.6)
 
+  -- Place stairs for the next level
+  local rx, ry, rw, rh = unpack(rooms[#rooms])
+  local x = math.random(rx + 2, rx + rw - 4)
+  local y = math.random(ry + 2, ry + rh - 4)
+  world[y][x] = "stairs_up"
+
   -- Position player into the first room
-  local rx, ry, rw, rh = unpack(rooms[1])
-  local playerx = math.random(rx + 1, rx + rw - 3)
+  rx, ry, rw, rh = unpack(rooms[1])
+  local playerx = math.random(rx + 1, rx + rw - 4)
   local playery = math.random(ry + 1, ry + rh - 3)
+
+  world[playery][playerx + 1] = "stairs_down"
 
   return world, playerx, playery, pieces
 end
@@ -363,9 +371,10 @@ end
 function World:interact(x, y)
   local tile = self.static[y][x]
 
-  -- Open doors
-  if tile == "door_v" or tile == "door_h" then
+  if tile == "door_v" or tile == "door_h" then -- Open doors
     self.static[y][x] = nil
+  elseif tile == "stairs_up" then -- Go to the next level
+    -- TODO: Generate next level
   end
 end
 
@@ -379,6 +388,30 @@ function World:sortPieces()
     end
 
     table.insert(self.layers[p.y], p)
+  end
+end
+
+function World:_drawMinimap()
+  for y=1,self.height do
+    for x=1,self.width do
+      if self.static[y][x] then
+        love.graphics.setColor(1, 0, 0, 0.5)
+      else
+        love.graphics.setColor(0, 0, 0, 0.5)
+      end
+
+      love.graphics.rectangle("fill", x, y, 1, 1)
+
+      love.graphics.resetColor()
+    end
+  end
+
+  for i,p in ipairs(self.pieces) do
+    love.graphics.setColor(0, 1, 0, 0.5)
+
+    love.graphics.rectangle("fill", p.x, p.y, 1, 1)
+
+    love.graphics.resetColor()
   end
 end
 
@@ -408,27 +441,4 @@ function World:draw(white_t, black_t)
   end
 
   love.graphics.pop()
-
-  -- Minimap
-  for y=1,self.height do
-    for x=1,self.width do
-      if self.static[y][x] then
-        love.graphics.setColor(1, 0, 0, 0.5)
-      else
-        love.graphics.setColor(0, 0, 0, 0.5)
-      end
-
-      love.graphics.rectangle("fill", x, y, 1, 1)
-
-      love.graphics.resetColor()
-    end
-  end
-
-  for i,p in ipairs(self.pieces) do
-    love.graphics.setColor(0, 1, 0, 0.5)
-
-    love.graphics.rectangle("fill", p.x, p.y, 1, 1)
-
-    love.graphics.resetColor()
-  end
 end
