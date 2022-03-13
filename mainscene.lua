@@ -1,43 +1,32 @@
-require "objects.pawn"
-require "objects.piece"
 require "objects.player"
-require "objects.world"
+require "objects.world1"
+require "objects.world2"
 
 camx, camy = 0, 0
 
-function drawBackground()
-  local w, h = getDimensions()
-  for y = -2, h / 16 do
-    for x = -2, w / 16 do
-      local sx = math.floor(x * 16 + ((-camx + w / 2) % 32))
-      local sy = math.floor(y * 16 + ((-camy + h / 2) % 32))
-      if (x + y) % 2 == 1 then
-        drawTile("floor1", sx, sy)
-      else
-        drawTile("floor2", sx, sy)
-      end
-    end
-  end
-end
-
-
 MainScene = Scene:extend()
 
-function MainScene:new()
-  -- Generate world
-  self.player = Player(0, 0)
-  self.world = World(self.player)
-
-  self.t = 0
-  self.deathtime = 0
-  self.state = 1
+function MainScene:new(world)
+  self.level = world or 1
   self.animduration = 0.15
+  self.deathtime = 0
+  self.player = Player(0, 0)
+  self.state = 1
+  self.t = 0
+  self.world = nil
+
+  if self.level == 1 then
+    self.world = World1(self.player)
+  elseif self.level == 2 then
+    self.world = World2(self.player)
+  end
 
   camx = self.player.x * 16 + 8
   camy = self.player.y * 16 + 4
 end
 
 function MainScene:update(dt)
+  -- Animation state machine
   if self.state == 1 then -- State 1: Wait for player and move whites
     if self.player.alive then
       if self.player:step() then
@@ -80,21 +69,25 @@ function MainScene:update(dt)
     end
   end
 
+  -- Load next world
+  if self.world.cleared then
+    current_scene = MainScene(self.level + 1)
+  end
+
+  -- Start death screen animation
   if not self.player.alive then
     if self.deathtime == 0 then
       self.deathtime = love.timer.getTime()
     end
   end
 
+  -- Update camera
   camx = camx + (self.player.x * 16 - camx + 8) * dt * 4
   camy = camy + (self.player.y * 16 - camy + 4) * dt * 4
 end
 
 function MainScene:draw()
-  love.graphics.setColor(0.9, 0.75, 0.9)
-
-  drawBackground()
-
+  -- Calculate animation offsets for each team
   local white_t = 1
   local black_t = 1
   if self.state == 4 then
@@ -103,6 +96,7 @@ function MainScene:draw()
     white_t = self.t / self.animduration
   end
 
+  -- Draw world
   self.world:draw(white_t, black_t)
 
   -- Death screen
